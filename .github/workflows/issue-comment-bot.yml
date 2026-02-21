@@ -1,0 +1,28 @@
+name: Issue Comment Bot
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check label and comment
+        if: github.event.label.name == 'bug' || github.event.label.name == 'feature' || github.event.label.name == 'completed'
+        env:
+          LABEL: ${{ github.event.label.name }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          if [ "$LABEL" = "bug" ]; then
+            BODY="Thank you for reporting this bug. Our team will investigate and fix it."
+          elif [ "$LABEL" = "feature" ]; then
+            BODY="Thank you for the feature request. We will consider including this in a future release."
+          elif [ "$LABEL" = "completed" ]; then
+            BODY="This issue has been resolved. Thank you for your contribution!"
+          fi
+          curl -s -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/issues/$ISSUE_NUMBER/comments \
+            -d "{\"body\":\"$BODY\"}"
